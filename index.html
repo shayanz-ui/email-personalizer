@@ -279,7 +279,7 @@ Write ${numVariants} distinct variants of the greeting + personalization + hook 
           "anthropic-dangerous-direct-browser-access": "true"
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
+          model: "claude-sonnet-5",
           max_tokens: 1000,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: userPrompt }]
@@ -287,10 +287,15 @@ Write ${numVariants} distinct variants of the greeting + personalization + hook 
       });
 
       if (!response.ok) {
+        let detail = "";
+        try {
+          const errBody = await response.json();
+          detail = errBody?.error?.message ? " - " + errBody.error.message : "";
+        } catch (e) { /* ignore parse failure */ }
         if (response.status === 401) {
-          throw new Error("That API key was rejected (401) - double check it's copied correctly.");
+          throw new Error("That API key was rejected (401)" + detail + " - double check it's copied correctly.");
         }
-        throw new Error("API request failed with status " + response.status);
+        throw new Error("API request failed with status " + response.status + detail);
       }
 
       const data = await response.json();
