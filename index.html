@@ -180,6 +180,14 @@ Write ${numVariants} distinct variants of the greeting + personalization + hook 
             <div class="pm-title">Email Personalizer</div>
           </div>
         </div>
+        <div class="pm-panel" style="margin-bottom:18px;">
+          <h2>API Key</h2>
+          <div class="pm-field" style="margin-bottom:0;">
+            <label for="pm-apikey">Anthropic API key</label>
+            <input type="password" id="pm-apikey" placeholder="sk-ant-..." autocomplete="off" />
+            <div class="pm-hint">Stored only in this browser tab's memory for this session - never saved, never sent anywhere except directly to api.anthropic.com. You'll need to re-enter it if you reload the page. Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a>.</div>
+          </div>
+        </div>
         <div class="pm-grid">
           <div class="pm-panel">
             <h2>Prospect Input</h2>
@@ -245,7 +253,12 @@ Write ${numVariants} distinct variants of the greeting + personalization + hook 
     const extraContext = document.getElementById('pm-context').value.trim();
     const templateKey = document.getElementById('pm-template').value;
     const numVariants = parseInt(document.getElementById('pm-variants').value, 10);
+    const apiKey = document.getElementById('pm-apikey').value.trim();
 
+    if (!apiKey) {
+      errorSlot.innerHTML = '<div class="pm-error">Enter your Anthropic API key above first.</div>';
+      return;
+    }
     if (!liText) {
       errorSlot.innerHTML = '<div class="pm-error">Paste some LinkedIn content first - the more signal, the better the personalization.</div>';
       return;
@@ -259,7 +272,12 @@ Write ${numVariants} distinct variants of the greeting + personalization + hook 
       const userPrompt = buildUserPrompt(firstName, company, liText, extraContext, templateKey, numVariants);
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 1000,
@@ -269,6 +287,9 @@ Write ${numVariants} distinct variants of the greeting + personalization + hook 
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("That API key was rejected (401) - double check it's copied correctly.");
+        }
         throw new Error("API request failed with status " + response.status);
       }
 
