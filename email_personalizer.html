@@ -1,0 +1,337 @@
+<div id="pmail-root"></div>
+<style>
+  #pmail-root {
+    --bg: #f7f6f3;
+    --panel: #ffffff;
+    --ink: #1b1b1f;
+    --ink-soft: #55565f;
+    --line: #e3e1db;
+    --accent: #5b4bda;
+    --accent-soft: #eeebfb;
+    --mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--bg);
+    min-height: 100%;
+    padding: 28px 20px 60px;
+    box-sizing: border-box;
+  }
+  #pmail-root * { box-sizing: border-box; }
+  .pm-wrap { max-width: 980px; margin: 0 auto; }
+  .pm-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 8px; }
+  .pm-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .pm-title span { color: var(--accent); }
+  .pm-eyebrow { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-soft); }
+  .pm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 800px) { .pm-grid { grid-template-columns: 1fr; } }
+  .pm-panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+  .pm-panel h2 { font-size: 13px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); margin: 0 0 14px; }
+  .pm-field { margin-bottom: 14px; }
+  .pm-field label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; color: var(--ink); }
+  .pm-field .pm-hint { font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; }
+  .pm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  input[type=text], textarea, select {
+    width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px;
+    font-family: var(--sans); font-size: 13.5px; background: #fdfdfc; color: var(--ink);
+    resize: vertical;
+  }
+  input[type=text]:focus, textarea:focus, select:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  textarea.pm-tall { min-height: 160px; }
+  textarea.pm-short { min-height: 70px; }
+  .pm-generate {
+    width: 100%; margin-top: 6px; padding: 12px 16px; border: none; border-radius: 7px;
+    background: var(--accent); color: #fff; font-weight: 700; font-size: 14px; cursor: pointer;
+    font-family: var(--sans); letter-spacing: 0.01em;
+  }
+  .pm-generate:disabled { background: #b6aef0; cursor: default; }
+  .pm-generate:hover:not(:disabled) { background: #4c3ec4; }
+  .pm-error { background: #fdecec; border: 1px solid #f3b9b9; color: #8a2a2a; padding: 10px 12px; border-radius: 6px; font-size: 13px; margin-top: 10px; }
+  .pm-output { margin-top: 18px; }
+  .pm-variant { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; }
+  .pm-variant-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .pm-variant-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); font-weight: 700; }
+  .pm-copy-btn { font-size: 11.5px; border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 5px 10px; cursor: pointer; color: var(--ink-soft); font-family: var(--sans); }
+  .pm-copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .pm-subject { font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); margin-bottom: 10px; }
+  .pm-subject b { color: var(--ink); font-weight: 600; }
+  .pm-email-body { white-space: pre-wrap; font-size: 13.8px; line-height: 1.55; }
+  .pm-highlight { background: var(--accent-soft); border-radius: 3px; padding: 0 2px; }
+  .pm-wordcount { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); margin-top: 10px; }
+  .pm-loading { display: flex; align-items: center; gap: 10px; color: var(--ink-soft); font-size: 13.5px; padding: 20px 0; }
+  .pm-spinner { width: 16px; height: 16px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: pm-spin 0.7s linear infinite; }
+  @keyframes pm-spin { to { transform: rotate(360deg); } }
+  .pm-empty { color: var(--ink-soft); font-size: 13px; padding: 30px 10px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
+</style>
+<script>
+(function() {
+  const BODY_TEMPLATES = {
+    "1": {
+      label: "Option 1",
+      intro: "As early teams start to pick up momentum, a few things tend to slow them down more than expected. One place we see that happen a lot is their bank.",
+      rest: "Most banks technically work, but start to get in the way as things pick up - no real support for startups, surprise fees, and limited card access.\n\nMercury is trusted by 300k+ startups, from first check through scale. Think a banking platform designed for how founders actually operate with a SAFE tool to help you close your first round and $300k+ in software discounts.\n\nOpen to exploring?"
+    },
+    "2": {
+      label: "Option 2",
+      intro: "Founders at this stage are zeroed in on reaching the next milestone - but one place we see early teams quietly losing time and money is their bank.",
+      rest: "Most banking tools weren't built for how startups operate - clunky platforms, limited access to cards, and zero support on things like SAFEs and software discounts.\n\nMercury is trusted by 1 in 3 startups from first check through scale. Think a banking platform built for the AI era with a SAFE tool, no fees in $USD, and a corporate card you can access early.\n\nOpen to exploring?"
+    }
+  };
+
+  const SYSTEM_PROMPT = `You write first-touch cold outreach emails ("Pmails") for an SDR at Mercury (a fintech banking platform for startups). You write ONLY the personalization + hook + transition line for each email. A fixed body/CTA is provided and must be reproduced VERBATIM after your transition line - you never rewrite, shorten, or rephrase the fixed body/CTA text.
+
+CORE PHILOSOPHY
+Cold email is relevance-first sales writing, not clever copywriting. The prospect should think "this person understands something specific about me or my company" - never "this person scraped my LinkedIn." Research beats cleverness. A legitimate reason for outreach is a specific signal (a role change, hiring pattern, funding, product launch, company milestone, something they posted or said). A weak reason is generic - job title alone, "saw your LinkedIn profile," mutual connections, generic industry or company size.
+
+FOUR LENSES TO PULL FROM THE PASTED LINKEDIN TEXT
+1. Persona knowledge - what this person cares about because of their role: responsibilities, metrics they own, pressure they're under.
+2. Account knowledge - company-level signal: funding, growth, hiring, new product, recent news, market move. Connect the signal to a likely challenge, don't just mention the signal. ("Saw the Series B" is bad. "Saw the Series B - usually the next messy part is X" is good.)
+3. Personal knowledge - background/public activity (posts, authored content, career moves). Use to explain what they likely care about now, not as trivia. Never force in shallow facts (school, location, sports team) just because they're available.
+4. Value-prop knowledge - not used in the opener itself (the fixed body handles this), but keep in mind the transition line must logically point toward "their banking setup is quietly a problem as they scale."
+
+PERSONALIZATION RULES
+- Combine 2 signals when possible (e.g. recent funding + a hiring push) rather than one shallow fact - this is what makes personalization feel earned rather than templated.
+- Hard no: anything about their family, anything only findable on Facebook/Instagram, anything religious or political. If it feels sus, it is.
+- LinkedIn/Twitter public activity, company news, funding, hiring, product launches, career moves are all fair game.
+- If pulling from "personal" personalization (hobby, content they made, travel), you MUST hook it to a business reason - personal color alone with no connection to why you're reaching out feels disconnected.
+- Don't reference school attended unless nothing better is available - it's the weakest signal on the list.
+
+VOICE AND STYLE RULES (hard constraints)
+- Never use "I", "me", "we", or "us" in the personalization/hook. Use constructions like "Noticed...", "Saw...", "Guessing...", "Guessing that means...", "Often when [X] happens...". This is a hard rule, not a preference.
+- No hype, no jargon, no fake enthusiasm, no feature-dumping, no cleverness for its own sake.
+- Banned phrases: "checking in", "circling back", "hope you're well", "I'd love to", "just wanted to reach out", "based on your title", "I saw your profile", "we have mutual connections".
+- Write like a sharp, direct sales operator, not a marketing copywriter. Plainspoken, specific, lightly conversational, concise.
+- The personalization + hook + transition line together should be 2-4 sentences MAX, roughly 35-55 words total. The full email (personalization + fixed body) must stay close to 125 words total - so the opener needs to be tight.
+- Subject line: 2-5 words, casual, lowercase-ish and personalized (not generic, not salesy, no punctuation-heavy formatting, may use a name or @ or a specific detail).
+
+IMPLICATION, NOT EXPLANATION (the most important rule - violate this and the whole draft fails)
+Never explain why a signal matters. State the implication as if it's already obvious. Trust the reader to connect it themselves. This is the single biggest tell of AI-written or analyst-written outreach versus something a sharp SDR would actually send.
+Banned constructions (never write these, in any phrasing):
+- "This signals that..." / "This means..." / "These are two signs that..." / "This represents an inflection point..."
+- "...which suggests..." / "...is an indication that..." / "...two signals that [X]..."
+- Any sentence that narrates your own reasoning process out loud (e.g. "that transition is usually when X quietly starts Y" - the words "that transition is" are you explaining your thinking, not stating the implication)
+- Explanatory parentheticals that spell out jargon or unpack a term (e.g. "company scaffolding (accounts, receiving money, separating finances)") - if you need a parenthetical to explain what you meant, cut the term and just say the plain thing, or cut it entirely
+Required pattern instead - land directly on the implication using a plain, understated hinge phrase:
+- "Usually that's where..." / "Usually that's the point where..." / "Looks like..." / "Feels like..." / "That's often when..."
+Compare:
+- Bad: "Winning the Google hackathon and heading to Fowler are two signals that the company is crossing from side project into something that needs structure."
+- Good: "Winning the Google hackathon and heading to Fowler feels like a pretty meaningful next step. Usually that's where building the company starts looking different."
+Same insight, half the words, no narration.
+
+DON'T STEAL THE BODY'S THUNDER
+The personalization's job is ONLY to create tension - not to name or solve the problem. The fixed body is where banking/finance/operational specifics get introduced. If your personalization already says the word "bank," "banking," "accounts," "finances," "cash," or names the operational pain directly, you have gone too far and are duplicating what the body is about to say.
+Wrong shape: Research -> names the banking problem -> Mercury pitch (this makes the body's opening line redundant)
+Right shape: Research -> founder-stage implication (something is shifting, getting more real, needing more structure) -> the fixed body naturally introduces the specific pain
+The transition line should end on a general, human observation about the founder's stage or momentum - vague enough that the fixed body's first sentence still feels like new information, not a repeat. Do not use the words "bank," "banking," "account," "fees," or "finances" anywhere in the personalization block.
+
+OUTPUT FORMAT
+Return ONLY valid JSON (no markdown fences, no commentary), matching exactly this shape:
+{
+  "variants": [
+    {
+      "subject_line": "string",
+      "personalization": "the 2-4 sentence personalization + hook + transition line, ending right before the fixed body begins",
+      "signal_used": "one short phrase naming what signal(s) from the LinkedIn text this variant is built on, for the SDR's own reference"
+    }
+  ]
+}
+Produce exactly the number of variants requested. Each variant should pull on a genuinely different signal or angle from the pasted text where possible - not just reworded versions of the same idea.`;
+
+  function buildUserPrompt(firstName, company, liText, extraContext, templateKey, numVariants) {
+    const tmpl = BODY_TEMPLATES[templateKey];
+    return `PROSPECT FIRST NAME: ${firstName || "(not given)"}
+COMPANY: ${company || "(not given)"}
+
+PASTED LINKEDIN CONTENT (profile, activity, posts, etc - raw text as copied):
+"""
+${liText}
+"""
+
+ADDITIONAL CONTEXT (news, funding, notes the SDR already has - may be empty):
+"""
+${extraContext || "(none provided)"}
+"""
+
+FIXED BODY THIS MUST TRANSITION INTO (do not rewrite this, and do not name banking/finance/accounts yourself - it's shown only so you can end on a founder-stage observation that the body's first line will naturally follow):
+"${tmpl.intro}"
+
+Write ${numVariants} distinct variants of the greeting + personalization + hook + transition line. Start each with "hey ${firstName || "[name]"}," on its own line, then a blank line, then the personalization block. End on the implication, not an explanation of it - no "this means," no narrating your own reasoning, no naming the specific pain. Return JSON only, per the format specified.`;
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function assembleFullEmail(personalizationBlock, templateKey) {
+    const tmpl = BODY_TEMPLATES[templateKey];
+    return `${personalizationBlock}\n\n${tmpl.intro}\n\n${tmpl.rest}`;
+  }
+
+  function wordCount(s) {
+    return s.trim().split(/\s+/).filter(Boolean).length;
+  }
+
+  function render() {
+    const root = document.getElementById('pmail-root');
+    root.innerHTML = `
+      <div class="pm-wrap">
+        <div class="pm-header">
+          <div>
+            <div class="pm-title">Email Personalizer</div>
+          </div>
+        </div>
+        <div class="pm-grid">
+          <div class="pm-panel">
+            <h2>Prospect Input</h2>
+            <div class="pm-row">
+              <div class="pm-field">
+                <label for="pm-firstname">First name</label>
+                <input type="text" id="pm-firstname" placeholder="e.g. Jordan" />
+              </div>
+              <div class="pm-field">
+                <label for="pm-company">Company</label>
+                <input type="text" id="pm-company" placeholder="e.g. Fernwood Labs" />
+              </div>
+            </div>
+            <div class="pm-field">
+              <label for="pm-litext">Pasted LinkedIn content</label>
+              <textarea id="pm-litext" class="pm-tall" placeholder="Paste headline, About section, recent posts/activity, job history, anything relevant..."></textarea>
+            </div>
+            <div class="pm-field">
+              <label for="pm-context">Extra context <span style="color:var(--ink-soft); font-weight:400;">(optional - funding news, hiring, anything you already know)</span></label>
+              <textarea id="pm-context" class="pm-short" placeholder="e.g. Raised a $6M seed in June, hiring 2 AEs right now..."></textarea>
+            </div>
+            <div class="pm-row">
+              <div class="pm-field">
+                <label for="pm-template">Body template</label>
+                <select id="pm-template">
+                  <option value="1">Option 1</option>
+                  <option value="2">Option 2</option>
+                </select>
+              </div>
+              <div class="pm-field">
+                <label for="pm-variants">Variants</label>
+                <select id="pm-variants">
+                  <option value="2">2</option>
+                  <option value="3" selected>3</option>
+                </select>
+              </div>
+            </div>
+            <button class="pm-generate" id="pm-generate-btn">Generate personalized openers</button>
+            <div id="pm-error-slot"></div>
+          </div>
+          <div class="pm-panel">
+            <h2>Generated Emails</h2>
+            <div id="pm-output-slot">
+              <div class="pm-empty">Paste a prospect's LinkedIn info on the left and generate to see drafts here.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('pm-generate-btn').addEventListener('click', handleGenerate);
+  }
+
+  async function handleGenerate() {
+    const btn = document.getElementById('pm-generate-btn');
+    const errorSlot = document.getElementById('pm-error-slot');
+    const outputSlot = document.getElementById('pm-output-slot');
+    errorSlot.innerHTML = '';
+
+    const firstName = document.getElementById('pm-firstname').value.trim();
+    const company = document.getElementById('pm-company').value.trim();
+    const liText = document.getElementById('pm-litext').value.trim();
+    const extraContext = document.getElementById('pm-context').value.trim();
+    const templateKey = document.getElementById('pm-template').value;
+    const numVariants = parseInt(document.getElementById('pm-variants').value, 10);
+
+    if (!liText) {
+      errorSlot.innerHTML = '<div class="pm-error">Paste some LinkedIn content first - the more signal, the better the personalization.</div>';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+    outputSlot.innerHTML = '<div class="pm-loading"><div class="pm-spinner"></div>Reading through the profile and drafting openers...</div>';
+
+    try {
+      const userPrompt = buildUserPrompt(firstName, company, liText, extraContext, templateKey, numVariants);
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: "user", content: userPrompt }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("API request failed with status " + response.status);
+      }
+
+      const data = await response.json();
+      const textBlocks = (data.content || []).filter(b => b.type === "text").map(b => b.text);
+      let raw = textBlocks.join("\n").trim();
+      raw = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
+
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch (e) {
+        throw new Error("Couldn't parse the model's response as JSON.");
+      }
+
+      const variants = parsed.variants || [];
+      if (!variants.length) {
+        throw new Error("No variants came back - try again.");
+      }
+
+      renderVariants(variants, templateKey);
+    } catch (err) {
+      outputSlot.innerHTML = '<div class="pm-empty">Nothing generated yet.</div>';
+      errorSlot.innerHTML = '<div class="pm-error">' + escapeHtml(err.message || String(err)) + '</div>';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generate personalized openers';
+    }
+  }
+
+  function renderVariants(variants, templateKey) {
+    const outputSlot = document.getElementById('pm-output-slot');
+    const tmplLabel = BODY_TEMPLATES[templateKey].label;
+    outputSlot.innerHTML = variants.map((v, i) => {
+      const fullEmail = assembleFullEmail(v.personalization, templateKey);
+      const wc = wordCount(fullEmail);
+      const id = 'pm-email-' + i;
+      return `
+        <div class="pm-variant">
+          <div class="pm-variant-head">
+            <span class="pm-variant-label">Variant ${i + 1} &middot; ${escapeHtml(tmplLabel)}</span>
+            <button class="pm-copy-btn" data-target="${id}">Copy email</button>
+          </div>
+          <div class="pm-subject">Subject: <b>${escapeHtml(v.subject_line || '')}</b></div>
+          <div class="pm-email-body" id="${id}">${escapeHtml(fullEmail)}</div>
+          <div class="pm-wordcount">${wc} words &middot; signal used: ${escapeHtml(v.signal_used || 'n/a')}</div>
+        </div>
+      `;
+    }).join('');
+
+    outputSlot.querySelectorAll('.pm-copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = document.getElementById(btn.getAttribute('data-target'));
+        const text = target.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          const original = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = original; }, 1500);
+        });
+      });
+    });
+  }
+
+  render();
+})();
+</script>
