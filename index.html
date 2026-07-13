@@ -145,7 +145,10 @@ Return ONLY valid JSON (no markdown fences, no commentary), matching exactly thi
     }
   ]
 }
-Produce exactly the number of variants requested. Each variant should pull on a genuinely different signal or angle from the pasted text where possible - not just reworded versions of the same idea.`;
+Produce exactly the number of variants requested. Each variant should pull on a genuinely different signal or angle from the pasted text where possible - not just reworded versions of the same idea.
+
+IF THE PASTED CONTENT HAS LITTLE OR NO USABLE SIGNAL
+This will happen sometimes - a thin profile, just endorsements/skills, no About section or activity. Never break out of JSON to explain this in prose. Instead, still return valid JSON in the exact shape above, using the best fallback you can construct: fall back to whatever role/company/industry context is available (from company name or extra context field), write a more general but still non-generic-sounding personalization about the company/industry stage rather than the individual, and set "signal_used" to something honest like "thin profile - fell back to company/industry framing" so the SDR knows to go find better personalization themselves before sending. Always return the JSON structure - never respond with an explanation instead of the JSON.`;
 
   function buildUserPrompt(firstName, company, liText, extraContext, templateKey, numVariants) {
     const tmpl = BODY_TEMPLATES[templateKey];
@@ -290,7 +293,7 @@ Write ${numVariants} distinct variants of the greeting + personalization + hook 
         },
         body: JSON.stringify({
           model: "claude-sonnet-5",
-          max_tokens: 1000,
+          max_tokens: 4096,
           system: SYSTEM_PROMPT,
           messages: [{ role: "user", content: userPrompt }]
         })
@@ -313,11 +316,22 @@ Write ${numVariants} distinct variants of the greeting + personalization + hook 
       let raw = textBlocks.join("\n").trim();
       raw = raw.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```\s*$/i, "").trim();
 
+      // Defensive extraction: pull out just the {...} block in case the model
+      // added any stray text before/after, rather than failing outright.
+      const firstBrace = raw.indexOf("{");
+      const lastBrace = raw.lastIndexOf("}");
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        raw = raw.slice(firstBrace, lastBrace + 1);
+      }
+
+      const stopReason = data.stop_reason;
       let parsed;
       try {
         parsed = JSON.parse(raw);
       } catch (e) {
-        throw new Error("Couldn't parse the model's response as JSON.");
+        const preview = raw.length > 300 ? raw.slice(0, 300) + "..." : raw;
+        const truncNote = stopReason === "max_tokens" ? " (response was cut off - try fewer variants or shorter LinkedIn paste)" : "";
+        throw new Error("Model didn't return valid JSON" + truncNote + ". Raw response: " + preview);
       }
 
       const variants = parsed.variants || [];
