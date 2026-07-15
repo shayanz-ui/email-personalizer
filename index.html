@@ -97,7 +97,20 @@ Default to the single strongest signal you can find, not the most signals you ca
 Bad (stacking): "Padayon Ko landing one of two Minerva spots at Fowler, right around the same stretch Somach turned into a full-time thing, feels like more than one project going real at the same time."
 Good (one signal, same thread): "Saw Padayon Ko landed one of Minerva's two spots at Fowler GSIC. Usually that's the point where a nights-and-weekends project starts needing a little more company infrastructure around it."
 
-SIGNAL SELECTION - PICK THE ONE THAT ANSWERS "WHY NOW"
+SIGNAL VALIDITY CHECK - RUN THIS BEFORE WRITING EACH VARIANT
+Before committing to a signal, ask: does this signal actually hold weight on its own, or am I reaching to make something out of nothing? Two specific failure patterns to catch:
+- Soft/reflective signals: a founder musing about a class, a framework, or an idea in a post is introspection, not evidence of momentum in the business. It doesn't answer "why reach out now." (e.g. reflecting on a bootcamp lesson about founder-fit is soft; live product demos in front of real users is not.)
+- Invented-pain signals: don't assume strain that the facts don't show. Holding a day job while co-founding a startup, or being involved in two companies, is not itself evidence anything is stretched thin - you don't know if it's manageable, thriving, or barely active. If you can't point to a concrete fact that creates the tension (not just infer one from a schedule), the signal is too weak to use.
+If your best available signal fails this check, look for a different one in the pasted content rather than writing around the weakness.
+
+VARIANTS MUST BE GENUINELY DIFFERENT, NOT THE SAME ANGLE REPHRASED
+Each variant must anchor on a different category of signal, and each must land on its own distinct implication - not three versions of the same underlying observation with different words. Before finalizing, check: if you stripped away the specific nouns, would variants 1, 2, and 3 collapse into the same sentence ("a side thing is turning into a real company")? If yes, discard and rebuild one of them around a different category entirely.
+Draw variants from different buckets where the pasted content allows it:
+- Traction/product signal: real usage, launches, demos, user feedback, being tested by actual people
+- Account/growth signal: hiring, funding, new offering, partnership, company-level news
+- Recognition/momentum signal: an award, competition result, press, being selected for something competitive
+- Founder-background signal (weakest, use only if nothing else is available): a role change or career move into founding
+Never use two variants from the same bucket, and never default to "nights-and-weekends project becoming a real company" as the implication for more than one variant even if the signals differ - vary the actual tension being pointed at (time/attention, complexity, credibility, pace) along with the signal.
 When multiple signals are available, prefer whichever one is most recent AND creates real forward momentum over ones that are just background or career history. A hiring push with follow-through already attached (certifications sponsored, client work already lined up) beats plain "they're hiring." Career history (e.g. "moved from role X to founding role Y a year ago") is weaker than a recent, active signal - it answers "who they are," not "why reach out now." If the strongest thing you can find is career history, use it, but recognize it as the fallback, not the first choice.
 Never invent or assume a pain that the facts don't support. If someone is involved with two companies, that alone is not evidence of strain - you don't know if both are thriving, if one is dormant, or if it takes an hour a month. Stating a pain the facts don't back up reads as "I inspected your resume," not "I noticed something real in your business." If you can't point to a concrete reason the signal creates a business need, don't manufacture one - pick a different signal instead.
 
@@ -190,7 +203,7 @@ ${extraContext || "(none provided)"}
 FIXED BODY THIS MUST TRANSITION INTO (do not rewrite this, and do not name banking/finance/accounts yourself - it's shown only so you can end on a founder-stage observation that the body's first line will naturally follow):
 "${tmpl.intro}"
 
-Write ${numVariants} distinct variants of the greeting + personalization + hook + transition line. Start each with "hey ${firstName || "[name]"}," on its own line, then a blank line, then the personalization block. End on the implication, not an explanation of it - no "this means," no narrating your own reasoning, no naming the specific pain. Return JSON only, per the format specified.`;
+Write ${numVariants} distinct variants of the greeting + personalization + hook + transition line. Each variant MUST be built on a different signal category (traction/product, account/growth, recognition/momentum, or founder-background as last resort) and MUST NOT collapse into the same underlying observation as another variant with different words - vary both the signal and the specific tension it points to. Run the signal validity check on each before writing it: if it's a soft/reflective signal or an invented pain, pick a different one from the pasted content. Start each with "hey ${firstName || "[name]"}," on its own line, then a blank line, then the personalization block. End on the implication, not an explanation of it - no "this means," no narrating your own reasoning, no naming the specific pain. Return JSON only, per the format specified.`;
   }
 
   function escapeHtml(s) {
